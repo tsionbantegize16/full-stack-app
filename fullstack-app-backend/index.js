@@ -2,12 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const morgan = require('morgan');
+const payrollRoutes = require('./routes/payrollRoutes');
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -79,7 +83,23 @@ app.delete('/tasks/:id', async (req, res) => {
   }
 });
 
+// API Routes
+app.use('/api/payroll', payrollRoutes);
+
+// Basic root route
+app.get('/', (req, res) => {
+    res.send('Welcome to Jupiter Construction Payroll API!');
+});
+
+// Error handling middleware (should be last)
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something broke!' });
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Access General Laborer Payroll at: http://localhost:${port}/api/payroll/general-laborers`);
+  console.log(`Access SubCity Payments Report at: http://localhost:${port}/api/payroll/subcity-payments`);
 });
